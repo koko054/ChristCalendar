@@ -68,8 +68,14 @@ public class ChurchCalendarService {
 
         // addEvent 메소드 개선 버전
         private void addEvent(Calendar calendar, String summary, LocalDate date, String uidKey, String description) {
-                // 1. 날짜 설정 (시간 정보 없는 All-day 이벤트)
-                net.fortuna.ical4j.model.Date icalDate = new net.fortuna.ical4j.model.Date(java.sql.Date.valueOf(date));
+                String dateStr = date.format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
+                net.fortuna.ical4j.model.Date icalDate;
+                try {
+                        icalDate = new net.fortuna.ical4j.model.Date(dateStr);
+                } catch (java.text.ParseException e) {
+                        throw new RuntimeException("Failed to parse date", e);
+                }
+
                 VEvent event = new VEvent(icalDate, summary);
 
                 // 2. 필수 프로퍼티 설정
@@ -77,8 +83,9 @@ public class ChurchCalendarService {
 
                 // 3. 상세 설명 추가 (줄바꿈 \n 활용)
                 if (description != null) {
-                        // 이스케이프된 줄바꿈을 적용하여 가독성 확보
-                        String formattedDesc = description.replace(". ", ".\\n");
+                        // \\n 대신 \n (실제 개행문자)를 사용하세요.
+                        // ical4j가 .ics 파일로 만들 때 자동으로 이를 텍스트 '\n'으로 변환해줍니다.
+                        String formattedDesc = description.replace(". ", ".\n");
                         event.getProperties().add(new net.fortuna.ical4j.model.property.Description(formattedDesc));
                 }
 
